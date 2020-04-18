@@ -17,7 +17,7 @@ None
 
 ### Create Local Account From Assigned User
 #### Purpose
-Creates a local user account based on the assigned user in Jamf. Prompts a password to be set the first time that user signs in.
+Creates a local user account based on the assigned user in Jamf. Prompts a password to be set on first login.
 
 ### Uses
 * If you're assigning devices to users in a NoMAD Login AD or DEPNotify workflow.
@@ -43,7 +43,7 @@ All variables are set in the script itself.
 #### Purpose
 Changes the computer name to the format USER_ID-MAKE-YEAR (e.g. ASR230-Macmini-2018).
 
-### Uses
+#### Uses
 * To change the device name to an org's standard format.
 
 #### Variables
