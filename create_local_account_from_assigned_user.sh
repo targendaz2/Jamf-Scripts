@@ -2,21 +2,22 @@
 
 # Aliases
 awk='/usr/bin/awk'
+cat='/bin/cat'
 curl='/usr/bin/curl'
 echo='/bin/echo'
+fold='/usr/bin/fold'
+head='/usr/bin/head'
 ioreg='/usr/sbin/ioreg'
 jamf='/usr/local/bin/jamf'
 pwpolicy='/usr/bin/pwpolicy'
 sysadminctl='/usr/sbin/sysadminctl'
 tr='/usr/bin/tr'
 
-# Editable settings
+# settings
 JAMF_URL="$4"
-TEMP_PASS='temp'
-
-# Settings that should not be edited
 API_USER="$5"
 API_PASS="$6"
+TEMP_PASS="$($cat /dev/urandom | $tr -dc 'a-zA-Z0-9' | $fold -w 32 | $head -n 1)"
 SERIAL=$($ioreg -c IOPlatformExpertDevice -d 2 | $awk -F\" '/IOPlatformSerialNumber/{print $(NF-1)}')
 
 # Get the computer owner's info
