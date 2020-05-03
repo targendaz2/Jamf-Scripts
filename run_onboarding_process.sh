@@ -11,9 +11,42 @@
 # General Information
 #########################################################################################
 # This script is designed to make implementation of NoMAD Login AD's Notify mechanism
-# very easy with limited scripting knowledge. The section below has variables that may be
+# very easy with limited scripting knowledge. The sections below have variables that may be
 # modified to customize the end user experience. DO NOT modify things in or below the
 # CORE LOGIC area unless major testing and validation is performed.
+
+
+#########################################################################################
+# Policy Information
+#########################################################################################
+# Much of this script just runs policies by custom trigger from Jamf. The triggers are as
+# follows, in the order they are called:
+
+# 1. pre-onboarding
+# Purpose: Intended to run policies to prepare the computer for the onboarding policies
+# Suggested Usage:
+#   - Install frameworks
+#   - Set timezone
+# 2. onboarding
+# Purpose: Anything that needs to be installed/set during onboarding
+# Suggested Usage:
+#   - Install applications/settings
+#   - Perform OS customizations
+# 3. post-onboarding
+# Purpose: Anything that needs to be done after onboarding policies are run
+# Suggested Usage:
+#   - Setting default applications
+#   - Any other configuration that needs to be done after apps are installed
+# 4. onboarding-cleanup
+# Purpose: Any last policies to run before the computer restarts
+# Suggested Usage:
+#   - Enabling Deep Freeze
+#   - Changing the login window
+#   - Uninstalling NoMAD Login AD
+
+# As a general guideline, don't include any policies that trigger restarts or need to be
+# run in a user context.
+
 
 #########################################################################################
 # Registration Settings
@@ -312,11 +345,20 @@ $echo "Command: MainTitle: ${COMPLETE_TITLE}"  >> "$DEPNOTIFY_LOG"
 $echo "Command: MainText: ${COMPLETE_TEXT}"  >> "$DEPNOTIFY_LOG"
 $echo "Status: ${COMPLETE_STATUS}" >> "$DEPNOTIFY_LOG"
 
+# Reset the login window
+log 'Resetting login window...'
+$authchanger -reset
+
+# Run any cleanup policies
+log "Running onboarding cleanup policies..."
+$jamf policy -event onboarding-cleanup
+log "Onboarding cleanup policies done running"
+
 # Kill caffeinate and restart with a 1 minute delay
 log "Decaffeinating..."
 kill "$caffeinatepid"
 
-log "Restarting in 2 minutes..."
+log "Restarting in 1 minute..."
 $shutdown -r +1 &
 
 log "Done!"
