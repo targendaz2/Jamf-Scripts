@@ -19,17 +19,48 @@
 # Registration Settings
 #########################################################################################
 
-# The title of the Assigned User text field, as set in the menu.nomad.login.ad plist.
-ASSIGNED_USER_TITLE='Assigned User'
+# Whether or not the registration feature will be used
+REGISTRATION_ENABLED=true
 
-# The title of the Device Name text field, as set in the menu.nomad.login.ad plist.
-DEVICE_NAME_TITLE='Device Name'
+# Delay between each registration item being processed. Really only helps make sure each
+# item can be seen in the progress bar, but at the cost of an added few seconds
+REGISTRATION_ITEM_DELAY=3
 
-# The title of the Computer Role text field, as set in the menu.nomad.login.ad plist.
-DEVICE_ROLE_TITLE='Device Role'
+# These settings are used to retrieve what's set during the "registration" part of the
+# notify logon mechanism if enabled. The "LABEL" settings should match what's set in the
+# similarly named items in the "menu.nomad.login.ad" plist or configuration profile, and
+# the functions will be run verbatim if the "LABEL" variable is set. The value set during
+# the registration phase for each item will be the item's prefix plus "VALUE". For
+# example, the value for "text field 1" will be in "TEXT_FIELD_1_VALUE".
+TEXT_FIELD_1_LABEL=''
+TEXT_FIELD_1_FUNC() {
 
-# The domain prefix for the computer role receipt.
-ROLE_RECEIPT_PREFIX='org.company.role'
+}
+
+TEXT_FIELD_2_LABEL=''
+TEXT_FIELD_2_FUNC() {
+
+}
+
+POPUP_BUTTON_1_LABEL=''
+POPUP_BUTTON_1_FUNC() {
+
+}
+
+POPUP_BUTTON_2_LABEL=''
+POPUP_BUTTON_2_FUNC() {
+
+}
+
+POPUP_BUTTON_3_LABEL=''
+POPUP_BUTTON_3_FUNC() {
+
+}
+
+POPUP_BUTTON_4_LABEL=''
+POPUP_BUTTON_4_FUNC() {
+
+}
 
 
 #########################################################################################
@@ -89,9 +120,6 @@ COMPLETE_STATUS='Restarting, please wait...'
 
 # Where the log from this script will be stored.
 LOG_PATH='/private/tmp/firstrun.log'
-
-# The default time zone the computer should use.
-TIME_ZONE='America/New_York'
 
 # Where the user input will be stored temporarily. This should match the
 # "UserInputOutputPath" key in the menu.nomad.login.ad plist.
@@ -159,11 +187,6 @@ caffeinatepid=$!
 log "Disabling automatic software updates..."
 $softwareupdate --schedule off
 
-# Set Network Time
-log "Configuring Network Time Server..."
-$systemsetup -settimezone "$TIME_ZONE"
-$systemsetup -setusingnetworktime on
-
 # Wait for the setup assistant to complete before continuing
 log "Waiting for Setup Assistant to complete..."
 loggedInUser=$($scutil <<< "show State:/Users/ConsoleUser" | $awk -F': ' '/[[:space:]]+Name[[:space:]]:/ { if ( $2 != "loginwindow" ) { print $2 }}     ')
@@ -175,57 +198,85 @@ done
 # Let's continue
 log "Setup Assistant complete, continuing..."
 
-if [[ ! -f "$REGISTRATION_DONE_RECEIPT" ]]; then
-    # Wait for the user data to be submitted...
-    while [[ ! -f "$USERIO_PLIST" ]]; do
-        log "Waiting for user data..."
-        $sleep 5
-    done
+if [[ "$REGISTRATION_ENABLED" == 'true' ]]; then
+    if [[ ! -f "$REGISTRATION_DONE_RECEIPT" ]]; then
+        # Wait for the user data to be submitted...
+        while [[ ! -f "$USERIO_PLIST" ]]; do
+            log "Waiting for user data..."
+            $sleep $REGISTRATION_ITEM_DELAY
+        done
 
-    $echo "Command: MainTitle: ${REGISTRATION_TITLE}"  >> "$DEPNOTIFY_LOG"
+        $echo "Command: MainTitle: ${REGISTRATION_TITLE}"  >> "$DEPNOTIFY_LOG"
 
-    # Process device role
-    log 'Processing device role...'
-    device_role="$($defaults read "$USERIO_PLIST" "$DEVICE_ROLE_TITLE")"
-    $echo "Status: Setting ${DEVICE_ROLE_TITLE} to ${device_role}"  >> "$DEPNOTIFY_LOG"
+        # Process text field 1
+        if [[ ! "$TEXT_FIELD_1_LABEL" == '' ]]; then
+            log "Processing \"${TEXT_FIELD_1_LABEL}\"..."
+            TEXT_FIELD_1_VALUE="$($defaults read "$USERIO_PLIST" "$TEXT_FIELD_1_LABEL")"
+            $echo "Status: Setting ${TEXT_FIELD_1_LABEL} to ${TEXT_FIELD_1_VALUE}"  >> "$DEPNOTIFY_LOG"
+            TEXT_FIELD_1_FUNC
+            log "\"${TEXT_FIELD_1_LABEL}\" processed"
+            $sleep $REGISTRATION_ITEM_DELAY
+        fi
 
-    role_receipt="/private/var/db/receipts/${ROLE_RECEIPT_PREFIX}.${device_role}.bom"
-    $touch "$role_receipt"
+        # Process text field 2
+        if [[ ! "$TEXT_FIELD_2_LABEL" == '' ]]; then
+            log "Processing \"${TEXT_FIELD_2_LABEL}\"..."
+            TEXT_FIELD_2_VALUE="$($defaults read "$USERIO_PLIST" "$TEXT_FIELD_2_LABEL")"
+            $echo "Status: Setting ${TEXT_FIELD_2_LABEL} to ${TEXT_FIELD_2_VALUE}"  >> "$DEPNOTIFY_LOG"
+            TEXT_FIELD_2_FUNC
+            log "\"${TEXT_FIELD_2_LABEL}\" processed"
+            $sleep $REGISTRATION_ITEM_DELAY
+        fi
 
-    log 'Device role processed'
-    $sleep 3
+        # Process popup menu 1...
+        if [[ ! "$POPUP_BUTTON_1_LABEL" == '' ]]; then
+            log "Processing \"${POPUP_BUTTON_1_LABEL}\"..."
+            POPUP_BUTTON_1_VALUE="$($defaults read "$USERIO_PLIST" "$POPUP_BUTTON_1_LABEL")"
+            $echo "Status: Setting ${POPUP_BUTTON_1_LABEL} to ${POPUP_BUTTON_1_VALUE}"  >> "$DEPNOTIFY_LOG"
+            POPUP_BUTTON_1_FUNC
+            log "\"${POPUP_BUTTON_1_LABEL}\" processed"
+            $sleep $REGISTRATION_ITEM_DELAY
+        fi
 
-    # Process device name
-    log 'Processing device name...'
-    device_name="$($defaults read "$USERIO_PLIST" "$DEVICE_NAME_TITLE")"
-    $echo "Status: Setting ${DEVICE_NAME_TITLE} to ${device_name}"  >> "$DEPNOTIFY_LOG"
+        # Process popup menu 2...
+        if [[ ! "$POPUP_BUTTON_2_LABEL" == '' ]]; then
+            log "Processing \"${POPUP_BUTTON_2_LABEL}\"..."
+            POPUP_BUTTON_2_VALUE="$($defaults read "$USERIO_PLIST" "$POPUP_BUTTON_2_LABEL")"
+            $echo "Status: Setting ${POPUP_BUTTON_2_LABEL} to ${POPUP_BUTTON_2_VALUE}"  >> "$DEPNOTIFY_LOG"
+            POPUP_BUTTON_2_FUNC
+            log "\"${POPUP_BUTTON_2_LABEL}\" processed"
+            $sleep $REGISTRATION_ITEM_DELAY
+        fi
 
-    $scutil --set ComputerName "$device_name"
-    $scutil --set LocalHostName "$device_name"
-    $scutil --set HostName "$device_name"
-    $dscacheutil -flushcache
+        # Process popup menu 3...
+        if [[ ! "$POPUP_BUTTON_3_LABEL" == '' ]]; then
+            log "Processing \"${POPUP_BUTTON_3_LABEL}\"..."
+            POPUP_BUTTON_3_VALUE="$($defaults read "$USERIO_PLIST" "$POPUP_BUTTON_3_LABEL")"
+            $echo "Status: Setting ${POPUP_BUTTON_3_LABEL} to ${POPUP_BUTTON_3_VALUE}"  >> "$DEPNOTIFY_LOG"
+            POPUP_BUTTON_3_FUNC
+            log "\"${POPUP_BUTTON_3_LABEL}\" processed"
+            $sleep $REGISTRATION_ITEM_DELAY
+        fi
 
-    log 'Device name processed.'
-    $sleep 3
+        # Process popup menu 4...
+        if [[ ! "$POPUP_BUTTON_4_LABEL" == '' ]]; then
+            log "Processing \"${POPUP_BUTTON_4_LABEL}\"..."
+            POPUP_BUTTON_4_VALUE="$($defaults read "$USERIO_PLIST" "$POPUP_BUTTON_4_LABEL")"
+            $echo "Status: Setting ${POPUP_BUTTON_4_LABEL} to ${POPUP_BUTTON_4_VALUE}"  >> "$DEPNOTIFY_LOG"
+            POPUP_BUTTON_4_FUNC
+            log "\"${POPUP_BUTTON_4_LABEL}\" processed"
+            $sleep $REGISTRATION_ITEM_DELAY
+        fi
 
-    # Process assigned user
-    log 'Processing assigned user'
-    assigned_user="$($defaults read "$USERIO_PLIST" "$ASSIGNED_USER_TITLE")"
-    $echo "Status: Setting ${ASSIGNED_USER_TITLE} to ${assigned_user}"  >> "$DEPNOTIFY_LOG"
+        # Write a registration complete receipt
+        log 'Marking registration as complete'
+        $touch "$REGISTRATION_DONE_RECEIPT"
 
-    $jamf recon -endUsername "$assigned_user"
-
-    log 'Assigned user processed'
-    $sleep 3
-
-    # Write a registration complete receipt
-    log 'Marking registration as complete'
-    $touch "$REGISTRATION_DONE_RECEIPT"
-
-    # Clear UserInput mech, just in case of restart
-    log 'Clearing UserInput login mech'
-    $authchanger -reset -preLogin NoMADLoginAD:Notify
-    $killall -HUP NoMADLoginAD
+        # Clear UserInput mech, just in case of restart
+        log 'Clearing UserInput login mech'
+        $authchanger -reset -preLogin NoMADLoginAD:Notify
+        $killall -HUP NoMADLoginAD
+    fi
 fi
 
 
