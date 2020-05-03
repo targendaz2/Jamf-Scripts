@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Much of this was taken from:
+# Bits of this were taken from:
 # https://github.com/neilmartin83/MacADUK-2019/blob/master/example_provisioning_script.sh
 
 # Script layout taken from:
