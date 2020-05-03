@@ -136,20 +136,14 @@ USERIO_PLIST='/var/tmp/userinputoutput.plist'
 authchanger='/usr/local/bin/authchanger'
 awk='/usr/bin/awk'
 caffeinate='/usr/bin/caffeinate'
-cp='/bin/cp'
 date='/bin/date'
 defaults='/usr/bin/defaults'
-dscacheutil='/usr/bin/dscacheutil'
 echo='/bin/echo'
-ioreg='/usr/sbin/ioreg'
 jamf='/usr/local/bin/jamf'
-rm='/bin/rm'
 scutil='/usr/sbin/scutil'
 shutdown='/sbin/shutdown'
 sleep='/bin/sleep'
 softwareupdate='/usr/sbin/softwareupdate'
-sw_vers='/usr/bin/sw_vers'
-systemsetup='/usr/sbin/systemsetup'
 touch='/usr/bin/touch'
 
 # Settings
@@ -157,10 +151,6 @@ DEPNOTIFY_LOG='/var/tmp/depnotify.log'
 
 PROVISIONING_DONE_RECEIPT='/private/var/db/receipts/com.depnotify.provisioning.done.bom'
 REGISTRATION_DONE_RECEIPT='/private/var/db/receipts/com.depnotify.registration.done.bom'
-
-OS_VERSION=$($sw_vers -productVersion)
-OS_BUILD=$($sw_vers -buildVersion)
-SERIAL=$($ioreg -rd1 -c IOPlatformExpertDevice | $awk -F'"' '/IOPlatformSerialNumber/{print $4}')
 
 # Function to add date to log entries
 log(){
@@ -309,14 +299,6 @@ log "Post-onboarding policies done running"
 
 # Finishing up - tell the provisioner what's happening
 
-# Modify the login window as necesary
-log 'Setting the proper login window'
-$jamf policy -event onboarding-loginwindow
-
-# Fix disk permissions issues
-log 'Fixing disk permissions'
-$jamf policy -event onboarding-fixpermissions
-
 # Write a provisioning complete receipt
 log 'Marking onboarding process as finished'
 $touch "$PROVISIONING_DONE_RECEIPT"
@@ -334,12 +316,8 @@ $echo "Status: ${COMPLETE_STATUS}" >> "$DEPNOTIFY_LOG"
 log "Decaffeinating..."
 kill "$caffeinatepid"
 
-# Freeze the computer if necesary
-log 'Freezing the computer if necesary'
-$jamf policy -event onboarding-deepfreeze
-
 log "Restarting in 2 minutes..."
-$shutdown -r +2 &
+$shutdown -r +1 &
 
 log "Done!"
 
